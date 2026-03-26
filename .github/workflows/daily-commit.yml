@@ -1,0 +1,40 @@
+name: Daily Commit
+
+on:
+  schedule:
+    - cron: "15 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-log:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure commit identity
+        run: |
+          git config user.name "Pat Metz"
+          git config user.email "49944076+wuyafeiya@users.noreply.github.com"
+
+      - name: Append daily entry
+        run: |
+          mkdir -p logs
+          {
+            echo "- UTC: $(date -u '+%Y-%m-%d %H:%M:%S')"
+            echo "  Asia/Shanghai: $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+          } >> logs/daily-log.md
+
+      - name: Commit and push
+        run: |
+          git add logs/daily-log.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: daily update [skip ci]"
+          git push
